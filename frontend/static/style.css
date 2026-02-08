@@ -455,8 +455,8 @@ input[type="text"]:focus {
 /* Sidebar Action Tools (Expanding Buttons) */
 .sidebar-action-tools {
     padding: 15px;
-    padding-bottom: 60px;
-    /* Extra space at the bottom */
+    padding-bottom: 20px;
+    /* Reduced from 60px */
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -525,7 +525,8 @@ input[type="text"]:focus {
 }
 
 .tool-card.expanded .tool-panel {
-    max-height: 800px;
+    max-height: 1200px;
+    /* Increased from 800px */
     opacity: 1;
     padding: 0 15px 20px;
     pointer-events: auto;
