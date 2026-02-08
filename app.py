@@ -667,6 +667,9 @@ def evaluate_mock_test():
     subjective_answers = data.get('subjective_answers', {})
     questions = data.get('questions')
     
+    # Get topic_id from cookies for database saving
+    topic_id = request.cookies.get('topic_id')
+    
     if not questions:
         return jsonify({'error': 'Questions are required for evaluation'}), 400
         
