@@ -638,6 +638,33 @@ input[type="text"]:focus {
     border: 1px solid var(--border-color);
 }
 
+/* Quiz Content Scrollbar */
+#quiz-content {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--warning-color) transparent;
+}
+
+#quiz-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#quiz-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#quiz-content::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.2);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+#quiz-content::-webkit-scrollbar-thumb:hover {
+    background: var(--warning-color);
+}
+
 /* Flashcard Styling */
 .flashcard-container {
     perspective: 1000px;
