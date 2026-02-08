@@ -427,6 +427,13 @@
                     <div class="feedback-q">Overall AI Verdict</div>
                     <div id="overall-feedback-text" class="feedback-text"></div>
                 </div>
+
+                <div style="text-align: center; margin-top: 40px;">
+                    <button onclick="window.location.href='/?return=learning'" class="btn-primary"
+                        style="display: inline-flex; width: auto; padding: 15px 40px; border-radius: 16px;">
+                        <i class="fas fa-rocket"></i> Return to Learning Voyage
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -566,7 +573,7 @@
         }
 
         document.getElementById('close-results').addEventListener('click', () => {
-            document.getElementById('results-overlay').style.display = 'none';
+            window.location.href = '/?return=learning';
         });
     </script>
 </body>
