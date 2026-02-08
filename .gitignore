@@ -1,0 +1,6 @@
+v/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+learning_assistant.db

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume AI Analyzer | Voyager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .resume-container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            border: 2px dashed var(--border-color);
+            border-radius: 24px;
+            padding: 60px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 40px;
+        }
+
+        .upload-card:hover,
+        .upload-card.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(168, 85, 247, 0.05);
+            transform: translateY(-5px);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.4));
+        }
+
+        #resume-file {
+            display: none;
+        }
+
+        .analysis-results {
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            display: none;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .ats-score-container {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 8px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-light);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="resume-container">
+            <header style="text-align: center; margin-bottom: 50px;">
+                <h1 class="animated-slide-down">Resume AI Analyzer</h1>
+                <p class="subtitle">Optimize your resume for ATS and get expert AI feedback</p>
+            </header>
+
+            <div id="upload-zone" class="upload-card animated-zoom-in">
+                <i class="fas fa-file-upload upload-icon"></i>
+                <h2>Upload Your Resume</h2>
+                <p>Drag and drop or click to upload (PDF or DOCX)</p>
+                <input type="file" id="resume-file" accept=".pdf,.docx">
+                <p style="margin-top: 20px; font-size: 0.8rem; color: var(--text-light);">Supported formats: PDF, DOCX
+                    (Max 10MB)</p>
+            </div>
+
+            <div id="results" class="analysis-results">
+                <div class="ats-score-container">
+                    <div class="score-circle" id="ats-score">85%</div>
+                    <div>
+                        <h2 id="verdict">Strong Match</h2>
+                        <p id="verdict-text" class="text-light">Your resume has a high probability of passing ATS
+                            filters.</p>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h3><i class="fas fa-check-circle"></i> Key Strengths</h3>
+                        <div id="strengths" class="result-content"></div>
+                    </div>
+                    <div class="result-item">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Areas for Improvement</h3>
+                        <div id="improvements" class="result-content"></div>
+                    </div>
+                    <div class="result-item" style="grid-column: span 2;">
+                        <h3><i class="fas fa-lightbulb"></i> Strategic Recommendations</h3>
+                        <div id="recommendations" class="result-content"></div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 40px;">
+                    <button onclick="location.reload()" class="btn-outline" style="display: inline-flex; width: auto;">
+                        <i class="fas fa-redo"></i> Analyze Another Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resume-loading" class="loading-overlay">
+        <div class="loading-stairs">
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="ball"></div>
+        </div>
+        <p class="loading-text" id="loading-msg">Extracting resume data...</p>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('resume-file');
+        const loading = document.getElementById('resume-loading');
+        const loadingMsg = document.getElementById('loading-msg');
+        const results = document.getElementById('results');
+
+        uploadZone.onclick = () => fileInput.click();
+
+        uploadZone.ondragover = (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        };
+
+        uploadZone.ondragleave = () => uploadZone.classList.remove('drag-over');
+
+        uploadZone.ondrop = (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleUpload(e.dataTransfer.files[0]);
+            }
+        };
+
+        fileInput.onchange = () => {
+            if (fileInput.files.length) {
+                handleUpload(fileInput.files[0]);
+            }
+        };
+
+        async function handleUpload(file) {
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            loading.style.display = 'flex';
+            uploadZone.style.display = 'none';
+
+            try {
+                loadingMsg.textContent = "Scanning Resume Structure...";
+                const response = await fetch('/api/analyze-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.analysis);
+                } else {
+                    alert('Error: ' + data.error);
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Connection Error: ' + error.message);
+                location.reload();
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayResults(analysis) {
+            results.style.display = 'block';
+            document.getElementById('ats-score').textContent = analysis.atsScore + '%';
+            document.getElementById('verdict').textContent = analysis.verdict;
+            document.getElementById('verdict-text').textContent = analysis.verdictText;
+
+            document.getElementById('strengths').innerHTML = analysis.strengths.map(s => `• ${s}`).join('<br>');
+            document.getElementById('improvements').innerHTML = analysis.improvements.map(i => `• ${i}`).join('<br>');
+            document.getElementById('recommendations').innerHTML = analysis.recommendations.map(r => `• ${r}`).join('<br>');
+        }
+    </script>
+</body>
+
+</html>

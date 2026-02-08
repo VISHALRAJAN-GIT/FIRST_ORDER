@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Test | Voyager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+            flex-shrink: 0;
+        }
+
+        .test-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .test-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .section-header {
+            padding: 25px 40px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(168, 85, 247, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--primary-color);
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
+        .section-content {
+            padding: 50px;
+        }
+
+        /* MCQ Styles */
+        .mcq-item {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .mcq-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--primary-color);
+        }
+
+        .mcq-question {
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .mcq-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mcq-option {
+            padding: 15px 22px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+        }
+
+        .mcq-option:hover {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .mcq-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Subjective Styles */
+        .subjective-item {
+            margin-bottom: 50px;
+        }
+
+        .subjective-question {
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .subjective-guidelines {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            margin-bottom: 18px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .subjective-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .subjective-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Action Footer */
+        .test-footer {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        .evaluate-btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .evaluate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(168, 85, 247, 0.5);
+        }
+
+        .evaluate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Overlay */
+        .results-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .results-card {
+            background: var(--card-bg);
+            border-radius: 32px;
+            border: 1px solid var(--border-color);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        .close-results {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .score-summary {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 8px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.2);
+        }
+
+        .score-val {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        .score-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .feedback-section {
+            margin-top: 30px;
+        }
+
+        .feedback-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-left: 3px solid var(--primary-color);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 12px 12px 0;
+        }
+
+        .feedback-q {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .feedback-text {
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .key-point {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--success-color);
+            background: rgba(34, 197, 94, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #current-domain-tag {
+            background: rgba(168, 85, 247, 0.1);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        /* Back Button */
+        .back-nav {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 2000;
+        }
+
+        .back-btn-universal {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn-universal:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="back-nav">
+        <a href="/" class="back-btn-universal" title="Back to Home">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-stairs">
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="ball"></div>
+        </div>
+        <p id="loading-text" class="loading-text">Generating Mock Test Questions...</p>
+    </div>
+
+    <div class="app-container">
+        <div class="test-container">
+            <header class="test-header">
+                <div id="current-domain-tag">Current Context: Software Engineering</div>
+                <h1 class="animated-slide-down">Mock Proficiency Test</h1>
+                <p class="subtitle">Mixed MCQ and Detailed Assessment</p>
+            </header>
+
+            <div class="test-flow">
+                <!-- MCQ Section -->
+                <div class="test-section animated-slide-up">
+                    <div class="section-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h2>Step 1: Multiple Choice Questions</h2>
+                    </div>
+                    <div id="mcq-container" class="section-content">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Subjective Section -->
+                <div class="test-section animated-slide-up" style="animation-delay: 0.2s;">
+                    <div class="section-header">
+                        <i class="fas fa-pen-fancy"></i>
+                        <h2>Step 2: Subjective Assessment</h2>
+                    </div>
+                    <div id="subjective-container" class="section-content">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-footer animated-slide-up">
+                <button id="evaluate-btn" class="evaluate-btn" disabled>
+                    <i class="fas fa-microchip"></i> Evaluate Test Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="results-overlay" class="results-overlay">
+        <div class="results-card">
+            <button id="close-results" class="close-results"><i class="fas fa-times"></i></button>
+            <h2 style="text-align: center; margin-bottom: 30px;">Assessment Results</h2>
+
+            <div class="score-summary">
+                <div class="score-circle">
+                    <div id="final-mcq-score" class="score-val">0/5</div>
+                    <div class="score-label">MCQ Score</div>
+                </div>
+            </div>
+
+            <div class="feedback-section">
+                <h3><i class="fas fa-comment-dots"></i> Subjective Evaluation</h3>
+                <div id="subjective-results-list">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div id="overall-feedback-box" class="feedback-item"
+                    style="border-color: var(--success-color); border-left-width: 5px; margin-top: 30px;">
+                    <div class="feedback-q">Overall AI Verdict</div>
+                    <div id="overall-feedback-text" class="feedback-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testQuestions = null;
+        let selectedMCQAnswers = {};
+        let currentDomain = "";
+
+        document.addEventListener('DOMContentLoaded', fetchMockTest);
+
+        async function fetchMockTest() {
+            try {
+                const response = await fetch('/api/generate-mock-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    testQuestions = result.data;
+                    currentDomain = result.domain;
+                    document.getElementById('current-domain-tag').textContent = `Current Context: ${currentDomain}`;
+                    renderQuestions();
+                    document.getElementById('evaluate-btn').disabled = false;
+                } else {
+                    alert("Failed to generate test: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error fetching mock test:", error);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+
+        function renderQuestions() {
+            const mcqContainer = document.getElementById('mcq-container');
+            const subContainer = document.getElementById('subjective-container');
+
+            // Render MCQs
+            mcqContainer.innerHTML = testQuestions.mcqs.map(q => `
+                <div class="mcq-item" data-id="${q.id}">
+                    <div class="mcq-question">${q.id}. ${q.question}</div>
+                    <div class="mcq-options">
+                        ${Object.entries(q.options).map(([key, val]) => `
+                            <div class="mcq-option" onclick="selectMCQ(${q.id}, '${key}', this)">
+                                <strong>${key})</strong> ${val}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Subjective
+            subContainer.innerHTML = testQuestions.subjective.map(q => `
+                <div class="subjective-item">
+                    <div class="subjective-question">${q.id}. ${q.question}</div>
+                    <div class="subjective-guidelines">${q.guidelines}</div>
+                    <textarea class="subjective-textarea" data-id="${q.id}" placeholder="Type your detailed answer here..."></textarea>
+                </div>
+            `).join('');
+        }
+
+        function selectMCQ(questionId, optionKey, element) {
+            // Remove selection from siblings
+            const options = element.parentElement.querySelectorAll('.mcq-option');
+            options.forEach(opt => opt.classList.remove('selected'));
+
+            // Apply selection
+            element.classList.add('selected');
+            selectedMCQAnswers[questionId] = optionKey;
+        }
+
+        document.getElementById('evaluate-btn').addEventListener('click', evaluateTest);
+
+        async function evaluateTest() {
+            const evalBtn = document.getElementById('evaluate-btn');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+
+            // Collect subjective answers
+            const subjectiveAnswers = {};
+            document.querySelectorAll('.subjective-textarea').forEach(ta => {
+                subjectiveAnswers[ta.dataset.id] = ta.value;
+            });
+
+            evalBtn.disabled = true;
+            loadingText.textContent = "AI Agent is Evaluating Your Answers...";
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const response = await fetch('/api/evaluate-mock-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: currentDomain,
+                        mcq_answers: selectedMCQAnswers,
+                        subjective_answers: subjectiveAnswers,
+                        questions: testQuestions
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showResults(result.results);
+                } else {
+                    alert("Evaluation failed: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error evaluating test:", error);
+            } finally {
+                loadingOverlay.style.display = 'none';
+                evalBtn.disabled = false;
+            }
+        }
+
+        function showResults(results) {
+            document.getElementById('final-mcq-score').textContent = `${results.mcq_score}/${results.total_mcqs}`;
+
+            const resultsList = document.getElementById('subjective-results-list');
+            resultsList.innerHTML = results.subjective_details.map(eval => {
+                const q = testQuestions.subjective.find(s => s.id === eval.id);
+                return `
+                    <div class="feedback-item">
+                        <div class="feedback-head" style="display: flex; justify-content: space-between;">
+                            <div class="feedback-q">Q${eval.id}: ${q.question}</div>
+                            <div class="score-pill" style="background: var(--primary-color); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">${eval.score}/10</div>
+                        </div>
+                        <div class="feedback-text">${eval.feedback}</div>
+                        <div class="key-point">Key Point: ${eval.key_point}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('overall-feedback-text').textContent = results.overall_feedback;
+            document.getElementById('results-overlay').style.display = 'flex';
+        }
+
+        document.getElementById('close-results').addEventListener('click', () => {
+            document.getElementById('results-overlay').style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>
