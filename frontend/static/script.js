@@ -92,6 +92,7 @@ let currentAssessmentIndex = 0;
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
+    checkSession();
 
     // Intro Splash Sequence
     const introSplash = document.getElementById('intro-splash');
@@ -104,6 +105,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000); // Show splash for 3 seconds
     }
 });
+
+const resumeVoyageBtn = document.getElementById('resume-voyage-btn');
+
+async function checkSession() {
+    try {
+        const response = await fetch('/api/resume-session');
+        const data = await response.json();
+
+        if (data.success) {
+            roadmapData = {
+                topic: data.topic,
+                steps: data.steps,
+                persona: data.persona,
+                difficulty: data.difficulty
+            };
+            totalSteps = data.steps.length;
+            currentStepIndex = data.currentStepIndex;
+            sidebarTopic.textContent = data.topic;
+
+            personaTag.textContent = data.persona;
+            difficultyTag.textContent = data.difficulty;
+
+            if (resumeVoyageBtn) {
+                resumeVoyageBtn.classList.remove('hidden');
+                resumeVoyageBtn.addEventListener('click', () => {
+                    showScreen('learning-screen');
+                    updateLearningScreen();
+                });
+            }
+
+            // Also ensure we show the learning screen if we just came back from a subpage
+            // (The user said they want to be taken to the learning guide page)
+            showScreen('learning-screen');
+            await updateLearningScreen();
+        }
+    } catch (error) {
+        console.error('Session resume failed:', error);
+    }
+}
 
 // Event Listeners
 if (startBtn) startBtn.addEventListener('click', startLearning);
@@ -118,7 +158,7 @@ exampleBtns.forEach(btn => {
     });
 });
 
-if (backHomeBtn) backHomeBtn.addEventListener('click', resetToStart);
+if (backHomeBtn) backHomeBtn.addEventListener('click', () => showScreen('start-screen'));
 if (prevBtn) prevBtn.addEventListener('click', previousStep);
 if (nextBtn) nextBtn.addEventListener('click', nextStep);
 if (newTopicBtn) newTopicBtn.addEventListener('click', resetToStart);

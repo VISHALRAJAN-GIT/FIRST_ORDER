@@ -28,6 +28,45 @@ mock_test_gen = MockTestGenerator()
 def index():
     return render_template('index.html')
 
+@app.route('/api/resume-session', methods=['GET'])
+def resume_session():
+    session_id = request.cookies.get('session_id')
+    topic_id = request.cookies.get('topic_id')
+    
+    if not session_id or session_id not in sessions:
+        if topic_id:
+            try:
+                # Try to restore from DB if memory is lost
+                topic_data = db.get_topic(int(topic_id))
+                if topic_data:
+                    # Re-instantiate session
+                    from backend.core.session import LearningSession
+                    # We need to extract persona if possible, but default to General
+                    # Roadmap data is stored as JSON in DB
+                    roadmap = json.loads(topic_data['roadmap_data'])
+                    new_session = LearningSession(topic_data['name'], "General") 
+                    new_session.steps = roadmap['steps']
+                    new_session.current_step_index = topic_data['current_step']
+                    sessions[session_id] = new_session
+                else:
+                    return jsonify({'success': False, 'message': 'No session found'}), 404
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        else:
+            return jsonify({'success': False, 'message': 'No session found'}), 404
+            
+    learning_session = sessions[session_id]
+    step = learning_session.get_current_step()
+    
+    return jsonify({
+        'success': True,
+        'topic': learning_session.topic,
+        'steps': learning_session.steps,
+        'currentStepIndex': learning_session.current_step_index,
+        'persona': learning_session.persona,
+        'difficulty': "Intermediate" # Default if not stored
+    })
+
 @app.route('/api/start-topic', methods=['POST'])
 def start_topic():
     data = request.json
