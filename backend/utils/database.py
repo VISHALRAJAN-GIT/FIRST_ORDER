@@ -61,6 +61,18 @@ def init_db():
                   completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY (topic_id) REFERENCES topics(id))''')
     
+    # Mock test results table
+    c.execute('''CREATE TABLE IF NOT EXISTS mock_test_results
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  topic_id INTEGER,
+                  mcq_score INTEGER,
+                  total_mcqs INTEGER,
+                  subjective_score INTEGER,
+                  total_subjective INTEGER,
+                  overall_feedback TEXT,
+                  completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY (topic_id) REFERENCES topics(id))''')
+    
     conn.commit()
     conn.close()
 
@@ -244,6 +256,46 @@ def get_quiz_results(topic_id):
             'score': row[1],
             'total_questions': row[2],
             'completed_at': row[3]
+        })
+    
+    conn.close()
+    return results
+
+def save_mock_test_result(topic_id, result):
+    """Save mock test results"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # Calculate subjective score sum
+    subjective_score = sum([s['score'] for s in result.get('subjective_details', [])])
+    total_subjective = len(result.get('subjective_details', [])) * 10
+    
+    c.execute('''INSERT INTO mock_test_results 
+                 (topic_id, mcq_score, total_mcqs, subjective_score, total_subjective, overall_feedback)
+                 VALUES (?, ?, ?, ?, ?, ?)''', 
+              (topic_id, result['mcq_score'], result['total_mcqs'], subjective_score, total_subjective, result['overall_feedback']))
+    
+    conn.commit()
+    conn.close()
+
+def get_mock_test_results(topic_id):
+    """Get all mock test results for a topic"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    c.execute('''SELECT mcq_score, total_mcqs, subjective_score, total_subjective, overall_feedback, completed_at
+                 FROM mock_test_results WHERE topic_id = ?
+                 ORDER BY completed_at DESC''', (topic_id,))
+    
+    results = []
+    for row in c.fetchall():
+        results.append({
+            'mcq_score': row[0],
+            'total_mcqs': row[1],
+            'subjective_score': row[2],
+            'total_subjective': row[3],
+            'overall_feedback': row[4],
+            'completed_at': row[5]
         })
     
     conn.close()

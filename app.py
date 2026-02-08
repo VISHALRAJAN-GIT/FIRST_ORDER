@@ -593,6 +593,10 @@ def job_market():
 def mock_test():
     return render_template('mock_test.html')
 
+@app.route('/progress')
+def progress():
+    return render_template('progress.html')
+
 @app.route('/api/generate-mock-test', methods=['POST'])
 def generate_mock_test():
     session_id = request.cookies.get('session_id')
@@ -629,9 +633,78 @@ def evaluate_mock_test():
         
     try:
         results = mock_test_gen.evaluate_test(topic, mcq_answers, subjective_answers, questions)
+        
+        # Save results to database
+        if topic_id:
+            db.save_mock_test_result(int(topic_id), results)
+            
         return jsonify({
             'success': True,
             'results': results
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/progress-report', methods=['GET'])
+def get_progress_report():
+    """Generate a comprehensive progress report using AI"""
+    topic_id = request.cookies.get('topic_id')
+    session_id = request.cookies.get('session_id')
+    
+    if not topic_id:
+        return jsonify({'error': 'No topic selected'}), 400
+        
+    try:
+        topic_data = db.get_topic(int(topic_id))
+        quiz_results = db.get_quiz_results(int(topic_id))
+        mock_results = db.get_mock_test_results(int(topic_id))
+        
+        # Prepare context for AI
+        report_context = {
+            "domain": topic_data['name'],
+            "total_steps": topic_data['total_steps'],
+            "current_step": topic_data['current_step'],
+            "quizzes": quiz_results,
+            "mock_tests": mock_results
+        }
+        
+        prompt = f"""Analyze the following learning progress for the domain "{topic_data['name']}" and provide a career readiness report.
+        
+        Data:
+        {json.dumps(report_context, indent=2)}
+        
+        Based on this data, provide:
+        1. A "readinessScore" (0-100).
+        2. A "status" (e.g., "Learning", "Ready", "Expert").
+        3. A list of "softSkills" the user should focus on for this specific domain.
+        4. A "summary" of their journey and what's next.
+        
+        Return your response EXACTLY as a JSON object:
+        {{
+          "readinessScore": 75,
+          "status": "Ready to Apply",
+          "softSkills": ["Communication", "Problem Solving", "Time Management"],
+          "summary": "You have completed most of the roadmap with high scores...",
+          "nextSteps": "Complete the final project and start applying for junior roles."
+        }}
+        Return ONLY the JSON object."""
+        
+        messages = [{"role": "user", "content": prompt}]
+        response = perplexity_client.chat_completion(messages)
+        ai_response = response['choices'][0]['message']['content']
+        
+        # Extract JSON
+        if "```json" in ai_response:
+            ai_response = ai_response.split("```json")[1].split("```")[0].strip()
+        elif "```" in ai_response:
+            ai_response = ai_response.split("```")[1].split("```")[0].strip()
+            
+        report = json.loads(ai_response)
+        
+        return jsonify({
+            'success': True,
+            'report': report,
+            'raw_data': report_context
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

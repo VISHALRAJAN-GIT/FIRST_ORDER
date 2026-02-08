@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress | Voyager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent-color: #f72585;
+            --secondary-accent: #7209b7;
+        }
+
+        .progress-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .report-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .readiness-badge {
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            display: inline-block;
+        }
+
+        .status-expert {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+        }
+
+        .status-ready {
+            background: linear-gradient(45deg, #43e97b, #38f8d8);
+        }
+
+        .status-learning {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            border: 4px solid var(--accent-color);
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 30px rgba(247, 37, 133, 0.3);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+        }
+
+        .score-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 0.5rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .timeline-item {
+            padding-left: 1.5rem;
+            border-left: 2px solid var(--accent-color);
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+
+        @media (max-width: 900px) {
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="dark-mode">
+    <div class="app-container">
+        <div class="progress-container animated-fade-in">
+            <div class="header-section">
+                <div>
+                    <h1>My Progress Voyage</h1>
+                    <p class="subtitle" id="current-domain">Analyzing your career path...</p>
+                </div>
+                <a href="/" class="btn-outline btn-sm">
+                    <i class="fas fa-chevron-left"></i> Back to Learning
+                </a>
+            </div>
+
+            <div id="loading-report" class="report-section" style="text-align: center; padding: 5rem;">
+                <div class="loading-stairs">
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="ball"></div>
+                </div>
+                <p>Synthesizing your progress with AI...</p>
+            </div>
+
+            <div id="report-content" class="hidden">
+                <div class="report-grid">
+                    <!-- Left Column: AI Analysis & Readiness -->
+                    <div class="report-main">
+                        <div class="report-section animated-fade-in-up">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <div id="readiness-badge" class="readiness-badge status-learning">Analysing Status</div>
+                                <div class="score-circle" style="margin-top: 2rem;">
+                                    <span class="score-value" id="readiness-score">0</span>
+                                    <span class="score-label">Readiness Score</span>
+                                </div>
+                            </div>
+
+                            <h3>Career Readiness Report</h3>
+                            <p id="report-summary" style="line-height: 1.6; font-size: 1.1rem; margin-top: 1rem;"></p>
+
+                            <div
+                                style="margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 15px;">
+                                <h4 style="color: var(--accent-color);"><i class="fas fa-map-marked-alt"></i> What's
+                                    Next?</h4>
+                                <p id="next-steps-text" style="margin-top: 0.5rem;"></p>
+                            </div>
+                        </div>
+
+                        <div class="report-section animated-fade-in-up-delayed" style="margin-top: 2rem;">
+                            <h3><i class="fas fa-lightbulb"></i> Recommended Soft Skills</h3>
+                            <p class="subtitle">Tailored for your domain</p>
+                            <div id="soft-skills-container" style="margin-top: 1rem;">
+                                <!-- Skills populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Stats & Activity -->
+                    <div class="report-sidebar">
+                        <div class="report-section animated-slide-left">
+                            <h3>Quick Stats</h3>
+                            <div class="stat-card" style="margin-top: 1rem;">
+                                <span>Roadmap Progress</span>
+                                <strong id="roadmap-progress">0%</strong>
+                            </div>
+                            <div class="stat-card">
+                                <span>Avg. Quiz Score</span>
+                                <strong id="avg-quiz">0%</strong>
+                            </div>
+                            <div class="stat-card">
+                                <span>Mock Tests Done</span>
+                                <strong id="tests-count">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="report-section animated-slide-left" style="margin-top: 2rem;">
+                            <h3>Recent Activity</h3>
+                            <div id="activity-timeline" style="margin-top: 1.5rem;">
+                                <!-- Activity items populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/progress-report');
+                const data = await response.json();
+
+                if (data.success) {
+                    const report = data.report;
+                    const raw = data.raw_data;
+
+                    // Update Title/Domain
+                    document.getElementById('current-domain').innerText = `Career Path: ${raw.domain}`;
+
+                    // Update Readiness
+                    const badge = document.getElementById('readiness-badge');
+                    badge.innerText = report.status;
+                    if (report.readinessScore > 80) badge.className = 'readiness-badge status-expert';
+                    else if (report.readinessScore > 50) badge.className = 'readiness-badge status-ready';
+                    else badge.className = 'readiness-badge status-learning';
+
+                    document.getElementById('readiness-score').innerText = report.readinessScore;
+                    document.getElementById('report-summary').innerText = report.summary;
+                    document.getElementById('next-steps-text').innerText = report.nextSteps;
+
+                    // Soft Skills
+                    const skillsContainer = document.getElementById('soft-skills-container');
+                    report.softSkills.forEach(skill => {
+                        const span = document.createElement('span');
+                        span.className = 'skill-tag';
+                        span.innerText = skill;
+                        skillsContainer.appendChild(span);
+                    });
+
+                    // Stats
+                    const progress = Math.round((raw.current_step / raw.total_steps) * 100);
+                    document.getElementById('roadmap-progress').innerText = `${progress}%`;
+
+                    const avgQuiz = raw.quizzes.length > 0
+                        ? Math.round(raw.quizzes.reduce((a, b) => a + (b.score / b.total_questions), 0) / raw.quizzes.length * 100)
+                        : 0;
+                    document.getElementById('avg-quiz').innerText = `${avgQuiz}%`;
+                    document.getElementById('tests-count').innerText = raw.mock_tests.length;
+
+                    // Timeline
+                    const timeline = document.getElementById('activity-timeline');
+
+                    // Add Mock tests to timeline
+                    raw.mock_tests.slice(0, 3).forEach(test => {
+                        const score = Math.round(((test.mcq_score + (test.subjective_score / 10)) / (test.total_mcqs + (test.total_subjective / 10))) * 100);
+                        const item = document.createElement('div');
+                        item.className = 'timeline-item';
+                        item.innerHTML = `
+                            <strong>Mock Test Completed</strong>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Score: ${score}% | ${new Date(test.completed_at).toLocaleDateString()}</p>
+                        `;
+                        timeline.appendChild(item);
+                    });
+
+                    // UI Switch
+                    document.getElementById('loading-report').classList.add('hidden');
+                    document.getElementById('report-content').classList.remove('hidden');
+                } else {
+                    alert('Error loading report: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to fetch progress report:', error);
+                alert('Could not connect to the server.');
+            }
+        });
+    </script>
+</body>
+
+</html>
