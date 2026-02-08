@@ -90,38 +90,22 @@ let assessmentAnswers = {};
 let currentAssessmentIndex = 0;
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    // Show loader immediately while we check session
-    showScreen('loading');
-
-    loadStats();
-    checkSession();
-
-    // Intro Splash Sequence
-    const introSplash = document.getElementById('intro-splash');
-    if (introSplash) {
-        setTimeout(() => {
-            introSplash.classList.add('reveal');
-            setTimeout(() => {
-                introSplash.style.display = 'none';
-            }, 1000); // Wait for the split animation to finish
-        }, 3000); // Show splash for 3 seconds
-    }
+// Unified Init
+    });
 });
 
 const resumeVoyageBtn = document.getElementById('resume-voyage-btn');
 
 async function checkSession() {
     try {
-        // Check if we're being redirected from a sub-page
         const urlParams = new URLSearchParams(window.location.search);
         const returnTo = urlParams.get('return');
-
+        
         const response = await fetch('/api/resume-session');
         const data = await response.json();
 
         if (data.success) {
-            console.log("Active session found, resuming...");
+            console.log("Active session found, resuming voyage...");
             roadmapData = {
                 topic: data.topic,
                 steps: data.steps,
@@ -143,191 +127,21 @@ async function checkSession() {
                 };
             }
 
-            // Take user directly to the learning guide
+            // ABSOLUTE REDIRECTION: Always land on learning guide
             showScreen('learning-screen');
             await updateLearningScreen();
-
-            // Clean up URL if we had a return parameter
+            
             if (returnTo === 'learning') {
                 window.history.replaceState({}, '', '/');
             }
         } else {
-            console.log("No active session, showing start screen.");
             showScreen('start-screen');
         }
     } catch (error) {
-        console.error('Session resume failed:', error);
+        console.error('Session resume failing:', error);
         showScreen('start-screen');
     }
 }
-
-// Event Listeners
-if (startBtn) startBtn.addEventListener('click', startLearning);
-if (topicInput) topicInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') startLearning();
-});
-
-exampleBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        topicInput.value = btn.dataset.topic;
-        startLearning();
-    });
-});
-
-if (backHomeBtn) backHomeBtn.addEventListener('click', () => showScreen('start-screen'));
-if (prevBtn) prevBtn.addEventListener('click', previousStep);
-if (nextBtn) nextBtn.addEventListener('click', nextStep);
-if (newTopicBtn) newTopicBtn.addEventListener('click', resetToStart);
-if (exportBtn) exportBtn.addEventListener('click', exportHandbook);
-
-// Action Tool Cards (Expanding Buttons)
-document.querySelectorAll('.tool-card').forEach(card => {
-    const btn = card.querySelector('.tool-btn');
-    if (btn) {
-        btn.addEventListener('click', () => {
-            const toolName = card.dataset.tool;
-            toggleTool(toolName);
-        });
-    }
-});
-
-// Notes
-if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
-
-// Chat
-if (sendChatBtn) sendChatBtn.addEventListener('click', sendChat);
-if (chatInput) chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendChat();
-});
-if (clearChatBtn) clearChatBtn.addEventListener('click', clearChat);
-
-// Quiz
-if (generateQuizBtn) generateQuizBtn.addEventListener('click', generateQuiz);
-if (closeQuizResultsBtn) closeQuizResultsBtn.addEventListener('click', () => {
-    quizResultsModal.classList.add('hidden');
-});
-
-// Flashcard Listeners
-if (flashcard) flashcard.addEventListener('click', () => {
-    flashcard.classList.toggle('flipped');
-});
-if (prevCardBtn) prevCardBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    previousFlashcard();
-});
-if (nextCardBtn) nextCardBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    nextFlashcard();
-});
-
-// Assessment Listeners
-if (startAssessmentBtn) startAssessmentBtn.addEventListener('click', startAssessment);
-if (startDiscoveryBtn) startDiscoveryBtn.addEventListener('click', () => {
-    topicInput.value = startingTopic.textContent;
-    startLearning();
-});
-
-// Mobile Sidebar Toggles
-const toggleSidebarLeft = document.getElementById('toggle-sidebar-left');
-const toggleSidebarRight = document.getElementById('toggle-sidebar-right');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-const leftSidebar = document.querySelector('.sidebar');
-const rightSidebar = document.querySelector('.right-sidebar');
-
-if (toggleSidebarLeft) {
-    toggleSidebarLeft.addEventListener('click', () => {
-        leftSidebar.classList.toggle('open');
-        sidebarOverlay.classList.toggle('active');
-        rightSidebar.classList.remove('open');
-    });
-}
-
-if (toggleSidebarRight) {
-    toggleSidebarRight.addEventListener('click', () => {
-        rightSidebar.classList.toggle('open');
-        sidebarOverlay.classList.toggle('active');
-        leftSidebar.classList.remove('open');
-    });
-}
-
-if (sidebarOverlay) {
-    sidebarOverlay.addEventListener('click', () => {
-        leftSidebar.classList.remove('open');
-        rightSidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('active');
-    });
-}
-
-// Swipe Gestures for Mobile
-let touchStartX = 0;
-let touchEndX = 0;
-
-function handleGesture(sidebar, direction) {
-    const swipeDistance = touchEndX - touchStartX;
-    if (direction === 'rtl' && swipeDistance < -50) {
-        // Swipe Right to Left -> Close Left Sidebar
-        sidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('active');
-    } else if (direction === 'ltr' && swipeDistance > 50) {
-        // Swipe Left to Right -> Close Right Sidebar
-        sidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('active');
-    }
-}
-
-if (leftSidebar) {
-    leftSidebar.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-    leftSidebar.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleGesture(leftSidebar, 'rtl');
-    });
-}
-
-if (rightSidebar) {
-    rightSidebar.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-    rightSidebar.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleGesture(rightSidebar, 'ltr');
-    });
-}
-
-function toggleTool(toolName) {
-    const targetCard = document.getElementById(`${toolName}-tool-card`);
-    const alreadyExpanded = targetCard.classList.contains('expanded');
-
-    // Collapse all tools accurately
-    document.querySelectorAll('.tool-card').forEach(card => {
-        card.classList.remove('expanded');
-    });
-
-    if (!alreadyExpanded) {
-        targetCard.classList.add('expanded');
-
-        // Auto-focus logic
-        if (toolName === 'chat') {
-            setTimeout(() => {
-                const input = document.getElementById('chat-input');
-                if (input) input.focus();
-            }, 500);
-        } else if (toolName === 'notes') {
-            setTimeout(() => {
-                const area = document.getElementById('notes-textarea');
-                if (area) area.focus();
-            }, 500);
-        }
-
-        // IMPROVED SCROLLING: Bring entire card into center view
-        setTimeout(() => {
-            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 120);
-    }
-}
-
-// Utility logic
 
 async function loadStats() {
     try {
