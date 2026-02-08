@@ -91,6 +91,9 @@ let currentAssessmentIndex = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Show loader immediately while we check session
+    showScreen('loading');
+
     loadStats();
     checkSession();
 
@@ -114,6 +117,7 @@ async function checkSession() {
         const data = await response.json();
 
         if (data.success) {
+            console.log("Active session found, resuming...");
             roadmapData = {
                 topic: data.topic,
                 steps: data.steps,
@@ -129,19 +133,22 @@ async function checkSession() {
 
             if (resumeVoyageBtn) {
                 resumeVoyageBtn.classList.remove('hidden');
-                resumeVoyageBtn.addEventListener('click', () => {
+                resumeVoyageBtn.onclick = () => {
                     showScreen('learning-screen');
                     updateLearningScreen();
-                });
+                };
             }
 
-            // Also ensure we show the learning screen if we just came back from a subpage
-            // (The user said they want to be taken to the learning guide page)
+            // Take user directly to the learning guide
             showScreen('learning-screen');
             await updateLearningScreen();
+        } else {
+            console.log("No active session, showing start screen.");
+            showScreen('start-screen');
         }
     } catch (error) {
         console.error('Session resume failed:', error);
+        showScreen('start-screen');
     }
 }
 
@@ -854,13 +861,31 @@ function resetToStart() {
 }
 
 function showScreen(screenId) {
+    console.log(`Switching to screen: ${screenId}`);
+
+    // Reset screens
     startScreen.classList.remove('active');
     learningScreen.classList.remove('active');
-    loading.classList.add('hidden');
+
+    // Handle loading screen specially (has its own styles/class)
+    if (screenId === 'loading') {
+        loading.classList.remove('hidden');
+        loading.classList.add('active'); // ensure it shows if it relies on and active
+    } else {
+        loading.classList.add('hidden');
+        loading.classList.remove('active');
+    }
 
     const activeScreen = document.getElementById(screenId);
     if (activeScreen) {
         activeScreen.classList.add('active');
+
+        // Diagnostic check for sidebar tools if entering learning-screen
+        if (screenId === 'learning-screen') {
+            const tools = activeScreen.querySelectorAll('.tool-card');
+            console.log(`Learning Screen Active. Tools found: ${tools.length}`);
+            tools.forEach(t => console.log(`Tool ID: ${t.id}, Visible: ${t.offsetParent !== null}`));
+        }
 
         // Trigger animations
         const animatedElements = activeScreen.querySelectorAll('[class*="animated-"]');

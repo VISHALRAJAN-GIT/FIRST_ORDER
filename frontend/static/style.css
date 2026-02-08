@@ -455,6 +455,8 @@ input[type="text"]:focus {
 /* Sidebar Action Tools (Expanding Buttons) */
 .sidebar-action-tools {
     padding: 15px;
+    padding-bottom: 60px;
+    /* Extra space at the bottom */
     display: flex;
     flex-direction: column;
     gap: 12px;
