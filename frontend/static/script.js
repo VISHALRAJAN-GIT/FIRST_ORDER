@@ -89,6 +89,13 @@ let assessmentData = null;
 let assessmentAnswers = {};
 let currentAssessmentIndex = 0;
 
+// Mobile / Sidebar Elements
+const leftSidebar = document.querySelector('.sidebar');
+const rightSidebar = document.querySelector('.right-sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const toggleSidebarLeft = document.getElementById('toggle-sidebar-left');
+const toggleSidebarRight = document.getElementById('toggle-sidebar-right');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     showScreen('loading');
@@ -104,6 +111,103 @@ document.addEventListener('DOMContentLoaded', () => {
                 introSplash.style.display = 'none';
             }, 1000);
         }, 3000);
+    }
+
+    // Start Screen Initializers
+    if (startAssessmentBtn) startAssessmentBtn.addEventListener('click', startAssessment);
+    if (startDiscoveryBtn) startDiscoveryBtn.addEventListener('click', () => {
+        if (startingTopic && startingTopic.textContent) {
+            topicInput.value = startingTopic.textContent;
+            startLearning();
+        }
+    });
+    if (startBtn) startBtn.addEventListener('click', startLearning);
+
+    // Example Buttons
+    if (exampleBtns) {
+        exampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                topicInput.value = btn.dataset.topic;
+                startLearning();
+            });
+        });
+    }
+
+    // Learning Screen - Sidebar
+    if (backHomeBtn) backHomeBtn.addEventListener('click', resetToStart);
+    if (newTopicBtn) newTopicBtn.addEventListener('click', resetToStart);
+    if (exportBtn) exportBtn.addEventListener('click', exportHandbook);
+
+    // Sidebar Tool Toggles
+    document.querySelectorAll('.tool-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const tool = card.dataset.tool;
+            if (tool) toggleTool(tool);
+        });
+    });
+
+    // Sidebar Tool Panel - Actions
+    if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
+    if (sendChatBtn) sendChatBtn.addEventListener('click', sendChat);
+    if (clearChatBtn) clearChatBtn.addEventListener('click', clearChat);
+    if (generateQuizBtn) generateQuizBtn.addEventListener('click', generateQuiz);
+    if (closeQuizResultsBtn) closeQuizResultsBtn.addEventListener('click', () => {
+        quizResultsModal.classList.add('hidden');
+    });
+
+    // Chat input enter key
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+    }
+
+    // Step Navigation
+    if (prevBtn) prevBtn.addEventListener('click', previousStep);
+    if (nextBtn) nextBtn.addEventListener('click', nextStep);
+
+    // Tab switching
+    if (tabBtns) {
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                const content = document.getElementById(tabId);
+                if (content) content.classList.add('active');
+            });
+        });
+    }
+
+    // Flashcards
+    if (flashcard) {
+        flashcard.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+    }
+    if (prevCardBtn) prevCardBtn.addEventListener('click', previousFlashcard);
+    if (nextCardBtn) nextCardBtn.addEventListener('click', nextFlashcard);
+
+    // Mobile Sidebar Toggles
+    if (toggleSidebarLeft) {
+        toggleSidebarLeft.addEventListener('click', () => {
+            if (leftSidebar) leftSidebar.classList.toggle('open');
+            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        });
+    }
+    if (toggleSidebarRight) {
+        toggleSidebarRight.addEventListener('click', () => {
+            if (rightSidebar) rightSidebar.classList.toggle('open');
+            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        });
+    }
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            if (leftSidebar) leftSidebar.classList.remove('open');
+            if (rightSidebar) rightSidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        });
     }
 
     // Stop propagation for tool panels
