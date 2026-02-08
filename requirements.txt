@@ -3,3 +3,5 @@ python-dotenv
 openai
 flask
 gunicorn
+pypdf
+python-docx

@@ -12,6 +12,21 @@ class PerplexityClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        
+        # Initialize session with retries
+        self.session = requests.Session()
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        retry_strategy = Retry(
+            total=3,  # Total number of retries
+            backoff_factor=1,  # Wait 1s, 2s, 4s between retries
+            status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
+            allowed_methods=["POST"]  # Retry on POST requests
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
 
     def chat_completion(self, messages, model="sonar", temperature=0.2):
         """
@@ -25,7 +40,8 @@ class PerplexityClient:
         }
         
         try:
-            response = requests.post(url, headers=self.headers, json=payload)
+            # Use self.session instead of requests
+            response = self.session.post(url, headers=self.headers, json=payload, timeout=30)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:

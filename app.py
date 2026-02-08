@@ -468,24 +468,90 @@ def generate_assessment():
         ]
         Return ONLY the JSON list."""
         
-        messages = [{"role": "user", "content": prompt}]
-        response = perplexity_client.chat_completion(messages)
-        ai_response = response['choices'][0]['message']['content']
+        try:
+            messages = [{"role": "user", "content": prompt}]
+            response = perplexity_client.chat_completion(messages)
+            ai_response = response['choices'][0]['message']['content']
+        except Exception as e:
+            # Fallback if AI fails completely (connection error even after retries)
+            print(f"AI Generation failed: {e}")
+            # Return a static set of fallback questions so the user isn't stuck
+            return jsonify({
+                'success': True,
+                'questions': [
+                    {
+                        "id": 1,
+                        "question": "Which activity do you find most engaging?",
+                        "options": {"A": "Designing visual layouts", "B": "Analyzing data trends", "C": "Solving logic puzzles", "D": "Securing systems"}
+                    },
+                    {
+                        "id": 2,
+                        "question": "How do you prefer to solve problems?",
+                        "options": {"A": "Through creative expression", "B": "Using statistical methods", "C": "Writing code/algorithms", "D": "Investigating vulnerabilities"}
+                    },
+                    # Add more fallback questions if needed or keep it short for outage mode
+                    {
+                        "id": 3,
+                        "question": "What interests you most about technology?",
+                        "options": {"A": "User interfaces", "B": "Machine learning", "C": "Building applications", "D": "Network security"}
+                    }
+                ],
+                'is_fallback': True
+            })
         
-        # Extract JSON
+        # Enhanced JSON extraction with multiple fallback strategies
+        questions = None
+        
+        # Strategy 1: Try to extract from markdown code blocks
         if "```json" in ai_response:
-            ai_response = ai_response.split("```json")[1].split("```")[0].strip()
-        elif "```" in ai_response:
-            ai_response = ai_response.split("```")[1].split("```")[0].strip()
-            
-        questions = json.loads(ai_response)
+            try:
+                json_str = ai_response.split("```json")[1].split("```")[0].strip()
+                questions = json.loads(json_str)
+            except (IndexError, json.JSONDecodeError):
+                pass
+        
+        # Strategy 2: Try generic code blocks
+        if not questions and "```" in ai_response:
+            try:
+                json_str = ai_response.split("```")[1].split("```")[0].strip()
+                questions = json.loads(json_str)
+            except (IndexError, json.JSONDecodeError):
+                pass
+        
+        # Strategy 3: Try to find JSON array directly (look for first [ to last ])
+        if not questions:
+            try:
+                start_idx = ai_response.find('[')
+                end_idx = ai_response.rfind(']')
+                if start_idx != -1 and end_idx != -1:
+                    json_str = ai_response[start_idx:end_idx+1]
+                    questions = json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+        
+        # Strategy 4: Try the entire response as-is
+        if not questions:
+            try:
+                questions = json.loads(ai_response.strip())
+            except json.JSONDecodeError:
+                pass
+        
+        # If all strategies failed, return a helpful error
+        if not questions:
+            return jsonify({
+                'error': 'Failed to parse assessment questions from AI response',
+                'raw_response': ai_response[:500]  # First 500 chars for debugging
+            }), 500
         
         return jsonify({
             'success': True,
             'questions': questions
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': f'Assessment generation failed: {str(e)}',
+            'details': 'The AI service may be experiencing high load. Please try again in a moment.'
+        }), 500
 
 @app.route('/api/analyze-assessment', methods=['POST'])
 def analyze_assessment():
@@ -522,9 +588,22 @@ def analyze_assessment():
         }}
         Return ONLY the JSON object."""
         
-        messages = [{"role": "user", "content": prompt}]
-        response = perplexity_client.chat_completion(messages)
-        ai_response = response['choices'][0]['message']['content']
+        try:
+            messages = [{"role": "user", "content": prompt}]
+            response = perplexity_client.chat_completion(messages)
+            ai_response = response['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"AI Analysis failed: {e}")
+            # Fallback recommendation
+            return jsonify({
+                'success': True,
+                'result': {
+                    "recommendedDomain": "General Technology",
+                    "explanation": "Based on your interest in technology and problem solving, a general foundation in tech is the best starting point. This will allow you to explore various fields before specializing.",
+                    "startingTopic": "Computer Science Fundamentals"
+                },
+                'is_fallback': True
+            })
         
         # Extract JSON
         if "```json" in ai_response:
