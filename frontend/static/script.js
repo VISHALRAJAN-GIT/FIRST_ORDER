@@ -90,9 +90,63 @@ let assessmentAnswers = {};
 let currentAssessmentIndex = 0;
 
 // Initialize
-// Unified Init
+document.addEventListener('DOMContentLoaded', () => {
+    showScreen('loading');
+    loadStats();
+    checkSession();
+
+    // Intro Splash Sequence
+    const introSplash = document.getElementById('intro-splash');
+    if (introSplash) {
+        setTimeout(() => {
+            introSplash.classList.add('reveal');
+            setTimeout(() => {
+                introSplash.style.display = 'none';
+            }, 1000);
+        }, 3000);
+    }
+
+    // Stop propagation for tool panels
+    document.querySelectorAll('.tool-panel').forEach(panel => {
+        panel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     });
 });
+
+function toggleTool(toolName) {
+    const targetCard = document.getElementById(`${toolName}-tool-card`);
+    if (!targetCard) return;
+
+    const alreadyExpanded = targetCard.classList.contains('expanded');
+
+    // Collapse all tools accurately
+    document.querySelectorAll('.tool-card').forEach(card => {
+        card.classList.remove('expanded');
+    });
+
+    if (!alreadyExpanded) {
+        targetCard.classList.add('expanded');
+
+        // Auto-focus logic
+        if (toolName === 'chat') {
+            setTimeout(() => {
+                const input = document.getElementById('chat-input');
+                if (input) input.focus();
+            }, 500);
+        } else if (toolName === 'notes') {
+            setTimeout(() => {
+                const area = document.getElementById('notes-textarea');
+                if (area) area.focus();
+            }, 500);
+        }
+
+        // IMPROVED SCROLLING: Bring entire card into center view
+        setTimeout(() => {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+    }
+}
 
 const resumeVoyageBtn = document.getElementById('resume-voyage-btn');
 
@@ -100,7 +154,7 @@ async function checkSession() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const returnTo = urlParams.get('return');
-        
+
         const response = await fetch('/api/resume-session');
         const data = await response.json();
 
@@ -130,7 +184,7 @@ async function checkSession() {
             // ABSOLUTE REDIRECTION: Always land on learning guide
             showScreen('learning-screen');
             await updateLearningScreen();
-            
+
             if (returnTo === 'learning') {
                 window.history.replaceState({}, '', '/');
             }
