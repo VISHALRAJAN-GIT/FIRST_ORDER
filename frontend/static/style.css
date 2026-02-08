@@ -461,11 +461,26 @@ input[type="text"]:focus {
     gap: 12px;
     flex: 1;
     overflow-y: auto;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
 }
 
 .sidebar-action-tools::-webkit-scrollbar {
-    display: none;
+    width: 6px;
+}
+
+.sidebar-action-tools::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-action-tools::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.2);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-action-tools::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
 }
 
 .tool-card {
