@@ -113,6 +113,10 @@ const resumeVoyageBtn = document.getElementById('resume-voyage-btn');
 
 async function checkSession() {
     try {
+        // Check if we're being redirected from a sub-page
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('return');
+
         const response = await fetch('/api/resume-session');
         const data = await response.json();
 
@@ -142,6 +146,11 @@ async function checkSession() {
             // Take user directly to the learning guide
             showScreen('learning-screen');
             await updateLearningScreen();
+
+            // Clean up URL if we had a return parameter
+            if (returnTo === 'learning') {
+                window.history.replaceState({}, '', '/');
+            }
         } else {
             console.log("No active session, showing start screen.");
             showScreen('start-screen');
