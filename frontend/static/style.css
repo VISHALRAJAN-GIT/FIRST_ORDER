@@ -455,28 +455,73 @@ input[type="text"]:focus {
 /* Sidebar Action Tools (Expanding Buttons) */
 .sidebar-action-tools {
     padding: 15px;
-    padding-bottom: 20px;
-    /* Reduced from 60px */
+    padding-bottom: 40px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     flex: 1;
     overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.sidebar-action-tools::-webkit-scrollbar {
+    display: none;
 }
 
 .tool-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     overflow: hidden;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Tool Specific Borders */
+#notes-tool-card {
+    border-left: 3px solid #3b82f6;
+}
+
+#chat-tool-card {
+    border-left: 3px solid #a855f7;
+}
+
+#quiz-tool-card {
+    border-left: 3px solid #f59e0b;
+}
+
+#resume-tool-card {
+    border-left: 3px solid #ec4899;
+}
+
+#market-tool-card {
+    border-left: 3px solid #10b981;
+}
+
+#mock-test-tool-card {
+    border-left: 3px solid #ef4444;
+}
+
+#progress-tool-card {
+    border-left: 3px solid #06b6d4;
 }
 
 .tool-card:hover:not(.expanded) {
-    background: rgba(168, 85, 247, 0.05);
-    border-color: rgba(168, 85, 247, 0.3);
-    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(8px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tool-card.expanded {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-color);
+    transform: translateX(12px);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.2);
+    margin-bottom: 10px;
+    cursor: default;
+    z-index: 10;
 }
 
 .tool-btn {
@@ -525,12 +570,11 @@ input[type="text"]:focus {
 }
 
 .tool-card.expanded .tool-panel {
-    max-height: 1200px;
-    /* Increased from 800px */
+    max-height: 2000px;
     opacity: 1;
-    padding: 0 15px 20px;
+    padding: 0 15px 30px;
+    /* Extra bottom padding for visibility */
     pointer-events: auto;
-    /* Enable clicks when expanded */
 }
 
 #notes-textarea {

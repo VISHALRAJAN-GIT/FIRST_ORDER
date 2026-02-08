@@ -299,7 +299,7 @@ function toggleTool(toolName) {
     const targetCard = document.getElementById(`${toolName}-tool-card`);
     const alreadyExpanded = targetCard.classList.contains('expanded');
 
-    // Collapse all tools first
+    // Collapse all tools accurately
     document.querySelectorAll('.tool-card').forEach(card => {
         card.classList.remove('expanded');
     });
@@ -312,30 +312,22 @@ function toggleTool(toolName) {
             setTimeout(() => {
                 const input = document.getElementById('chat-input');
                 if (input) input.focus();
-            }, 600);
+            }, 500);
         } else if (toolName === 'notes') {
             setTimeout(() => {
                 const area = document.getElementById('notes-textarea');
                 if (area) area.focus();
-            }, 600);
+            }, 500);
         }
 
-        // Scroll into view
+        // IMPROVED SCROLLING: Bring entire card into center view
         setTimeout(() => {
-            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
     }
 }
 
-// Global click event to prevent tool closing when clicking inside panel
-document.addEventListener('DOMContentLoaded', () => {
-    // We already have some logic here, so let's just add the stopPropagation part
-    document.querySelectorAll('.tool-panel').forEach(panel => {
-        panel.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    });
-});
+// Utility logic
 
 async function loadStats() {
     try {
