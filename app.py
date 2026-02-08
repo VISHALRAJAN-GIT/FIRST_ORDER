@@ -819,21 +819,61 @@ def get_job_market_data():
         response = perplexity_client.chat_completion(messages)
         ai_response = response['choices'][0]['message']['content']
         
-        # Extract JSON
+        # Enhanced JSON extraction with multiple fallback strategies
+        json_data = None
+        
+        # Strategy 1: Try to extract from markdown code blocks
         if "```json" in ai_response:
-            ai_response = ai_response.split("```json")[1].split("```")[0].strip()
-        elif "```" in ai_response:
-            ai_response = ai_response.split("```")[1].split("```")[0].strip()
-            
-        data = json.loads(ai_response)
-        data['domain'] = domain
+            try:
+                json_str = ai_response.split("```json")[1].split("```")[0].strip()
+                json_data = json.loads(json_str)
+            except (IndexError, json.JSONDecodeError):
+                pass
+        
+        # Strategy 2: Try generic code blocks
+        if not json_data and "```" in ai_response:
+            try:
+                json_str = ai_response.split("```")[1].split("```")[0].strip()
+                json_data = json.loads(json_str)
+            except (IndexError, json.JSONDecodeError):
+                pass
+        
+        # Strategy 3: Try to find JSON object directly (look for first { to last })
+        if not json_data:
+            try:
+                start_idx = ai_response.find('{')
+                end_idx = ai_response.rfind('}')
+                if start_idx != -1 and end_idx != -1:
+                    json_str = ai_response[start_idx:end_idx+1]
+                    json_data = json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+        
+        # Strategy 4: Try the entire response as-is
+        if not json_data:
+            try:
+                json_data = json.loads(ai_response.strip())
+            except json.JSONDecodeError:
+                pass
+        
+        # If all strategies failed, return a helpful error
+        if not json_data:
+            return jsonify({
+                'error': 'Failed to parse AI response as JSON',
+                'raw_response': ai_response[:500]  # First 500 chars for debugging
+            }), 500
+        
+        json_data['domain'] = domain
         
         return jsonify({
             'success': True,
-            'data': data
+            'data': json_data
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': f'Job market data fetch failed: {str(e)}',
+            'details': 'Please try again or contact support if the issue persists'
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
