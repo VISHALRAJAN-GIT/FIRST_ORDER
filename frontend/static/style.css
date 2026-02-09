@@ -1782,7 +1782,8 @@ input[type="text"]:focus {
 /* FINAL MOBILE FIXES */
 @media (max-width: 600px) {
     .right-sidebar {
-        width: 100% !important;
+        width: 85% !important;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
     }
 
     .sidebar {
